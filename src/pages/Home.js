@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import spaceVideo from "../content/space.mp4";
+import { Link } from "react-router-dom";
 
 const WEATHER_API_URL =
   "https://api.open-meteo.com/v1/forecast?latitude=55.7512&longitude=37.6184&current=temperature_2m";
@@ -12,6 +13,13 @@ const Home = () => {
   const [news, setNews] = useState([]);
   const [loadingWeather, setLoadingWeather] = useState(true);
   const [loadingNews, setLoadingNews] = useState(true);
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    "https://static.vecteezy.com/system/resources/thumbnails/021/657/617/small_2x/green-earth-planet-free-png.png",
+    "https://static.vecteezy.com/system/resources/thumbnails/020/922/034/small_2x/isolated-realistic-jupiter-illustration-png.png",
+    "https://www.atomic-energy.ru/files/taxonomy/mars-1-1.png",
+  ];
 
   useEffect(() => {
     // Загрузка погоды
@@ -37,22 +45,15 @@ const Home = () => {
         setLoadingNews(false);
       })
       .catch(() => setLoadingNews(false));
-
-    let slides = document.querySelectorAll(".slider img");
-    let index = 0;
-
-    document.getElementById("next").addEventListener("click", function () {
-      slides[index].classList.remove("active");
-      index = (index + 1) % slides.length;
-      slides[index].classList.add("active");
-    });
-
-    document.getElementById("prev").addEventListener("click", function () {
-      slides[index].classList.remove("active");
-      index = (index - 1 + slides.length) % slides.length;
-      slides[index].classList.add("active");
-    });
   }, []);
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
 
   return (
     <div>
@@ -86,6 +87,9 @@ const Home = () => {
                 лет, до экзопланет, потенциально пригодных для жизни, наш путь к
                 звёздам только начинается.
               </p>
+              <button id="openModal" className="explore-btn">
+                <Link to="/posts">Исследовать Вселенную</Link>
+              </button>
             </div>
           </div>
         </section>
@@ -94,24 +98,21 @@ const Home = () => {
             <section id="gallery">
               <h2>Исследуйте солнечную систему вместе с нами</h2>
               <div className="slider">
-                <button id="prev">⬅</button>
+                <button onClick={handlePrevSlide} id="prev">
+                  ⬅
+                </button>
                 <img
-                  src="https://static.vecteezy.com/system/resources/thumbnails/021/657/617/small_2x/green-earth-planet-free-png.png"
-                  class="active"
+                  src={slides[currentSlide]}
                   alt="Земля"
+                  className="active"
                 />
-                <img
-                  src="https://static.vecteezy.com/system/resources/thumbnails/020/922/034/small_2x/isolated-realistic-jupiter-illustration-png.png"
-                  alt="Юпитер"
-                />
-                <img
-                  src="https://www.atomic-energy.ru/files/taxonomy/mars-1-1.png"
-                  alt="Марс"
-                />
-                <button id="next">➡</button>
+                <button onClick={handleNextSlide} id="next">
+                  ➡
+                </button>
               </div>
             </section>
 
+            {/* Остальная часть контента */}
             <section className="facts">
               <h2>Интересные факты о космосе</h2>
               <ul>
@@ -138,24 +139,6 @@ const Home = () => {
                   Мощнейший ракетоноситель в истории совершил первый успешный
                   суборбитальный полет 14 марта 2024 г.
                 </p>
-              </div>
-            </section>
-
-            <section className="gallery">
-              <h2>Галерея космоса</h2>
-              <div className="gallery-container">
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Andromeda_Galaxy_%28with_h-alpha%29.jpg/411px-Andromeda_Galaxy_%28with_h-alpha%29.jpg"
-                  alt="Галактика Андромеды"
-                />
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/The_VLT_goes_lion_hunting.jpg/1024px-The_VLT_goes_lion_hunting.jpg"
-                  alt="Млечный Путь"
-                />
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/M33_-_Triangulum_Galaxy.jpg/411px-M33_-_Triangulum_Galaxy.jpg"
-                  alt="Галактика Треугольника"
-                />
               </div>
             </section>
           </div>

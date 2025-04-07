@@ -9,8 +9,12 @@ const NASA_API_URL =
 const PostDetail = () => {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([]);
+  const [user, setUser] = useState({ name: "John Doe", isAuthenticated: true }); // Модель пользователя
   const navigate = useNavigate();
 
+  // Загрузка данных поста
   useEffect(() => {
     fetch(NASA_API_URL)
       .then((res) => res.json())
@@ -26,6 +30,18 @@ const PostDetail = () => {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // Обработка отправки комментария
+  const handleCommentSubmit = (e) => {
+    e.preventDefault();
+    if (comment.trim()) {
+      setComments([
+        ...comments,
+        { name: user.name, text: comment }, // Добавляем имя пользователя в комментарий
+      ]);
+      setComment(""); // очищаем поле ввода после отправки
+    }
+  };
 
   if (loading) return <p>Загрузка...</p>;
   if (!post) return <Navigate to="/notfound" />;
@@ -51,12 +67,43 @@ const PostDetail = () => {
           ></iframe>
         )}
         <p>{post.description}</p>
-        <button className="back-button" onClick={() => navigate(-1)}>
-          ⬅ Назад
-        </button>
-        <button className="back-button" onClick={() => navigate("/")}>
-          На главную
-        </button>
+
+        {user.isAuthenticated ? (
+          <div className="comment-section">
+            <h3>Комментарии</h3>
+            <form onSubmit={handleCommentSubmit}>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Оставьте комментарий..."
+                rows="4"
+                className="comment-input"
+              />
+              <button type="submit" className="comment-submit-button">
+                Отправить
+              </button>
+            </form>
+
+            <div className="comments-list">
+              {comments.map((comment, index) => (
+                <div key={index} className="comment">
+                  <strong>{comment.name}:</strong> <p>{comment.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p>Чтобы оставить комментарий, пожалуйста, авторизуйтесь.</p>
+        )}
+
+        <div className="buttons">
+          <button className="back-button" onClick={() => navigate(-1)}>
+            ⬅ Назад
+          </button>
+          <button className="back-button" onClick={() => navigate("/")}>
+            На главную
+          </button>
+        </div>
       </div>
       <Footer />
     </>
