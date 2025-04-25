@@ -26,6 +26,11 @@
       "react-app/jest"
     ]
   },
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "react-scripts start",
+    "server": "node server.js"
+  },
   "browserslist": {
     "production": [
       ">0.2%",

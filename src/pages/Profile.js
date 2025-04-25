@@ -7,15 +7,47 @@ const ProfilePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userData = {
-      email: "user@example.com",
-      username: "cosmic_explorer",
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Вы не авторизованы!");
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          "https://final-project-backend-82js.onrender.com/users/me",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Ошибка получения данных пользователя"
+          );
+        }
+
+        setUser(data);
+      } catch (err) {
+        alert(err.message);
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     };
-    setUser(userData);
-  }, []);
+
+    fetchProfile();
+  }, [navigate]);
 
   const handleLogout = () => {
-    console.log("Logged out");
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
@@ -28,10 +60,13 @@ const ProfilePage = () => {
       <Header />
       <h2>Профиль пользователя</h2>
       <p>
-        <strong>Username:</strong> {user.username}
+        <strong>Имя:</strong> {user.name}
       </p>
       <p>
         <strong>Email:</strong> {user.email}
+      </p>
+      <p>
+        <strong>Роль:</strong> {user.isAdmin ? "Администратор" : "Пользователь"}
       </p>
       <button onClick={handleLogout}>Выйти</button>
     </div>

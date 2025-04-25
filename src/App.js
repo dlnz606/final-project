@@ -16,6 +16,7 @@ import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import ProfilePage from "./pages/Profile";
 
+const apiUrl = process.env.REACT_APP_API_URL;
 const PrivateRoute = ({ element }) => {
   const { user } = useAuth();
   return user ? element : <Navigate to="/login" />;
@@ -24,6 +25,7 @@ const PrivateRoute = ({ element }) => {
 const AppRoutes = () => {
   const { user } = useAuth(); // Получаем данные пользователя
 
+  console.log("API URL:", apiUrl); // Выведем URL API для проверки
   return (
     <Routes>
       {/* Главная страница доступна всем */}

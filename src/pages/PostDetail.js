@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-const NASA_API_URL =
-  "https://api.nasa.gov/planetary/apod?api_key=tze7pOrJxnCOELz73ktcOfrEd0jDRhEXu62URJKl";
+const POSTS_API_URL = "https://final-project-backend-82js.onrender.com/posts";
+const COMMENTS_API_URL =
+  "https://final-project-backend-82js.onrender.com/comments";
 
 const PostDetail = () => {
+  const { id } = useParams(); // Получаем id поста из URL
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");
@@ -14,32 +16,88 @@ const PostDetail = () => {
   const [user, setUser] = useState({ name: "John Doe", isAuthenticated: true }); // Модель пользователя
   const navigate = useNavigate();
 
-  // Загрузка данных поста
+  // Загрузка данных поста и комментариев
   useEffect(() => {
-    fetch(NASA_API_URL)
-      .then((res) => res.json())
-      .then((data) => {
-        setPost({
-          title: data.title || "Название недоступно",
-          image: data.url || "https://via.placeholder.com/400",
-          description: data.explanation || "Описание отсутствует",
-          date: data.date || "Дата неизвестна",
-          mediaType: data.media_type || "unknown",
-        });
+    const fetchPost = async () => {
+      try {
+        const response = await fetch(`${POSTS_API_URL}/${id}`);
+        const postData = await response.json();
+        setPost(postData);
+        setComments(postData.comments); // Получаем комментарии с постом
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+      } catch (error) {
+        console.error("Ошибка при загрузке поста:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [id]);
 
   // Обработка отправки комментария
-  const handleCommentSubmit = (e) => {
+  const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (comment.trim()) {
-      setComments([
-        ...comments,
-        { name: user.name, text: comment }, // Добавляем имя пользователя в комментарий
-      ]);
-      setComment(""); // очищаем поле ввода после отправки
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Вы не авторизованы!");
+        return;
+      }
+
+      try {
+        const response = await fetch(COMMENTS_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userId: token,
+            postId: post._id,
+            content: comment,
+          }),
+        });
+
+        const newComment = await response.json();
+        if (response.ok) {
+          setComments([...comments, newComment]);
+          setComment(""); // очищаем поле ввода после отправки
+        } else {
+          alert(newComment.error || "Ошибка при добавлении комментария");
+        }
+      } catch (error) {
+        console.error("Ошибка при отправке комментария:", error);
+        alert("Ошибка при выполнении операции!");
+      }
+    }
+  };
+
+  // Удаление комментария
+  const handleDeleteComment = async (commentId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Вы не авторизованы!");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${COMMENTS_API_URL}/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setComments(comments.filter((comment) => comment._id !== commentId));
+      } else {
+        alert(data.error || "Ошибка при удалении комментария");
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении комментария:", error);
+      alert("Ошибка при выполнении операции!");
     }
   };
 
@@ -61,7 +119,7 @@ const PostDetail = () => {
             src={post.image}
             frameBorder="0"
             allowFullScreen
-            title="NASA Video"
+            title="Видео NASA"
             width="560"
             height="315"
           ></iframe>
@@ -85,11 +143,24 @@ const PostDetail = () => {
             </form>
 
             <div className="comments-list">
-              {comments.map((comment, index) => (
-                <div key={index} className="comment">
-                  <strong>{comment.name}:</strong> <p>{comment.text}</p>
-                </div>
-              ))}
+              {comments.length ? (
+                comments.map((comment) => (
+                  <div key={comment._id} className="comment">
+                    <strong>{comment.user.name}:</strong>{" "}
+                    <p>{comment.content}</p>
+                    {user.isAuthenticated && (
+                      <button
+                        className="delete-comment"
+                        onClick={() => handleDeleteComment(comment._id)}
+                      >
+                        Удалить
+                      </button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p>Комментариев еще нет</p>
+              )}
             </div>
           </div>
         ) : (

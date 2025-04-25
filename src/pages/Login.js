@@ -7,10 +7,33 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Logged in with:", email, password);
-    navigate("/profile");
+
+    try {
+      const response = await fetch(
+        "https://final-project-backend-82js.onrender.com/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Ошибка входа");
+      }
+
+      localStorage.setItem("token", data.token);
+      alert("Вход выполнен успешно!");
+      navigate("/profile");
+    } catch (error) {
+      alert(`Ошибка: ${error.message}`);
+    }
   };
 
   return (
